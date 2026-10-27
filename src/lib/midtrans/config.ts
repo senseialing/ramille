@@ -1,3 +1,4 @@
+// @ts-ignore
 import midtransClient from 'midtrans-client';
 
 export const isProduction = process.env.MIDTRANS_IS_PRODUCTION === 'true';

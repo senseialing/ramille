@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 
     let paymentStatus = 'pending';
     if (transaction_status === 'capture') {
-      paymentStatus = fraudStatus === 'challenge' ? 'challenge' : 'settlement';
+      paymentStatus = fraud_status === 'challenge' ? 'challenge' : 'settlement';
     } else if (transaction_status === 'settlement') {
       paymentStatus = 'settlement';
     } else if (['cancel', 'deny', 'expire'].includes(transaction_status)) {
