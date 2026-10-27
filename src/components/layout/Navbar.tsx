@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Search, Heart, User, ShoppingBag } from 'lucide-react';
 import { useCartStore } from '@/stores/cart-store';
 import { useWishlistStore } from '@/stores/wishlist-store';
@@ -12,10 +13,19 @@ interface NavbarProps {
   onOpenWishlist: () => void;
 }
 
+const NAV_LINKS = [
+  { href: '/', label: 'Home' },
+  { href: '/shop', label: 'Shop' },
+  { href: '/categories', label: 'Categories' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
+];
+
 export function Navbar({ onOpenSearch, onOpenAuth, onOpenWishlist }: NavbarProps) {
   const { openCart, getItemCount } = useCartStore();
   const wishlistItems = useWishlistStore((s) => s.items);
   const itemCount = getItemCount();
+  const pathname = usePathname();
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#FAF7F2]/90 backdrop-blur-md transition-all duration-300">
@@ -25,7 +35,7 @@ export function Navbar({ onOpenSearch, onOpenAuth, onOpenWishlist }: NavbarProps
           {/* Brand Logo */}
           <Link href="/" className="group flex items-center space-x-2 text-[#1E1A17]">
             <span className="text-xl font-serif tracking-tight text-[#8A6B4F] group-hover:rotate-45 transition-transform duration-500">
-              ✻
+              ?
             </span>
             <span className="text-2xl sm:text-3xl font-serif tracking-wide font-normal">
               Ramille
@@ -34,36 +44,22 @@ export function Navbar({ onOpenSearch, onOpenAuth, onOpenWishlist }: NavbarProps
 
           {/* Center Navigation Links */}
           <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-[#70655B]">
-            <Link 
-              href="/" 
-              className="text-[#1E1A17] border-b border-[#1E1A17] pb-1 transition-colors"
-            >
-              Home
-            </Link>
-            <Link 
-              href="/shop" 
-              className="hover:text-[#1E1A17] transition-colors"
-            >
-              Shop
-            </Link>
-            <Link 
-              href="/categories" 
-              className="hover:text-[#1E1A17] transition-colors"
-            >
-              Categories
-            </Link>
-            <Link 
-              href="/about" 
-              className="hover:text-[#1E1A17] transition-colors"
-            >
-              About
-            </Link>
-            <Link 
-              href="/contact" 
-              className="hover:text-[#1E1A17] transition-colors"
-            >
-              Contact
-            </Link>
+            {NAV_LINKS.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`pb-1 transition-all duration-300 ${
+                    isActive
+                      ? 'text-[#1E1A17] border-b border-[#1E1A17]'
+                      : 'hover:text-[#1E1A17] border-b border-transparent'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Right Action Icons */}
