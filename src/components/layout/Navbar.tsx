@@ -41,25 +41,25 @@ export function Navbar({ onOpenSearch, onOpenAuth, onOpenWishlist }: NavbarProps
               Home
             </Link>
             <Link 
-              href="#products" 
+              href="/shop" 
               className="hover:text-[#1E1A17] transition-colors"
             >
               Shop
             </Link>
             <Link 
-              href="#categories" 
+              href="/categories" 
               className="hover:text-[#1E1A17] transition-colors"
             >
               Categories
             </Link>
             <Link 
-              href="#about" 
+              href="/about" 
               className="hover:text-[#1E1A17] transition-colors"
             >
               About
             </Link>
             <Link 
-              href="#contact" 
+              href="/contact" 
               className="hover:text-[#1E1A17] transition-colors"
             >
               Contact
