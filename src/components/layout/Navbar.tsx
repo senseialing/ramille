@@ -1,11 +1,12 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Heart, User, ShoppingBag } from 'lucide-react';
+import { Search, Heart, User, ShoppingBag, LogOut } from 'lucide-react';
 import { useCartStore } from '@/stores/cart-store';
 import { useWishlistStore } from '@/stores/wishlist-store';
+import { useAuthStore } from '@/stores/auth-store';
 
 interface NavbarProps {
   onOpenSearch: () => void;
@@ -24,8 +25,15 @@ const NAV_LINKS = [
 export function Navbar({ onOpenSearch, onOpenAuth, onOpenWishlist }: NavbarProps) {
   const { openCart, getItemCount } = useCartStore();
   const wishlistItems = useWishlistStore((s) => s.items);
+  const { user, isLoggedIn, logout } = useAuthStore();
   const itemCount = getItemCount();
   const pathname = usePathname();
+
+  const handleLogout = () => {
+    if (confirm('Apakah Anda yakin ingin keluar dari akun Ramille?')) {
+      logout();
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#FAF7F2]/90 backdrop-blur-md transition-all duration-300">
@@ -35,7 +43,7 @@ export function Navbar({ onOpenSearch, onOpenAuth, onOpenWishlist }: NavbarProps
           {/* Brand Logo */}
           <Link href="/" className="group flex items-center space-x-2 text-[#1E1A17]">
             <span className="text-xl font-serif tracking-tight text-[#8A6B4F] group-hover:rotate-45 transition-transform duration-500">
-              ?
+              ✦
             </span>
             <span className="text-2xl sm:text-3xl font-serif tracking-wide font-normal">
               Ramille
@@ -63,7 +71,7 @@ export function Navbar({ onOpenSearch, onOpenAuth, onOpenWishlist }: NavbarProps
           </nav>
 
           {/* Right Action Icons */}
-          <div className="flex items-center space-x-4 sm:space-x-5 text-[#1E1A17]">
+          <div className="flex items-center space-x-3 sm:space-x-4 text-[#1E1A17]">
             {/* Search */}
             <button
               onClick={onOpenSearch}
@@ -87,15 +95,42 @@ export function Navbar({ onOpenSearch, onOpenAuth, onOpenWishlist }: NavbarProps
               )}
             </button>
 
-            {/* User Account / Profile Link */}
-            <Link
-              href="/account"
-              aria-label="Akun & Pesanan Saya"
-              className="p-2 hover:bg-[#EDE7DE] rounded-full transition-colors cursor-pointer text-[#1E1A17]"
-              title="Akun & Status Pesanan Saya"
-            >
-              <User className="w-5 h-5 stroke-[1.5]" />
-            </Link>
+            {/* User Account / Profile / Logout */}
+            {isLoggedIn ? (
+              <div className="flex items-center space-x-1 sm:space-x-1.5 bg-[#EDE7DE]/60 p-1 pl-1.5 pr-1.5 rounded-full border border-[#E3DBD0]/80">
+                <Link
+                  href="/account"
+                  aria-label="Akun & Pesanan Saya"
+                  className="flex items-center space-x-1.5 hover:opacity-80 transition-opacity cursor-pointer text-[#1E1A17]"
+                  title={`Akun: ${user?.name || user?.email}`}
+                >
+                  <div className="w-6 h-6 rounded-full bg-[#8A6B4F] text-white flex items-center justify-center text-[11px] font-semibold">
+                    {(user?.name || user?.email || 'U')[0].toUpperCase()}
+                  </div>
+                  <span className="hidden sm:inline text-xs font-medium max-w-[90px] truncate text-[#1E1A17]">
+                    {user?.name || user?.email?.split('@')[0]}
+                  </span>
+                </Link>
+                <div className="w-[1px] h-3.5 bg-[#D5CBBE]" />
+                <button
+                  onClick={handleLogout}
+                  aria-label="Tombol Keluar / Log Out"
+                  title="Keluar dari akun"
+                  className="p-1 text-[#70655B] hover:text-rose-600 rounded-full transition-colors cursor-pointer flex items-center"
+                >
+                  <LogOut className="w-4 h-4 stroke-[1.75]" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onOpenAuth}
+                aria-label="Masuk ke Akun"
+                className="p-2 hover:bg-[#EDE7DE] rounded-full transition-colors cursor-pointer text-[#1E1A17]"
+                title="Masuk / Daftar Akun"
+              >
+                <User className="w-5 h-5 stroke-[1.5]" />
+              </button>
+            )}
 
             {/* Cart Trigger with Badge */}
             <button

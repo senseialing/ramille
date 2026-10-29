@@ -73,12 +73,14 @@ export default function HomePage() {
       {/* Interactive Cart Slide-over Drawer (Zustand) */}
       <CartDrawer
         onProceedToCheckout={() => setIsCheckoutOpen(true)}
+        onOpenAuth={() => setIsAuthOpen(true)}
       />
 
       {/* Checkout & Midtrans Sandbox Modal */}
       <CheckoutModal
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
+        onOpenAuth={() => setIsAuthOpen(true)}
       />
 
       {/* Product Quick View Modal */}

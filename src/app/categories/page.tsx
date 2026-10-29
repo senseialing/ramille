@@ -119,8 +119,8 @@ export default function CategoriesPage() {
       </main>
 
       <Footer />
-      <CartDrawer onProceedToCheckout={() => setIsCheckoutOpen(true)} />
-      <CheckoutModal isOpen={isCheckoutOpen} onClose={() => setIsCheckoutOpen(false)} />
+      <CartDrawer onProceedToCheckout={() => setIsCheckoutOpen(true)} onOpenAuth={() => setIsAuthOpen(true)} />
+      <CheckoutModal isOpen={isCheckoutOpen} onClose={() => setIsCheckoutOpen(false)} onOpenAuth={() => setIsAuthOpen(true)} />
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onSelectProduct={() => {}} />
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <WishlistModal isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} onSelectProduct={() => {}} />

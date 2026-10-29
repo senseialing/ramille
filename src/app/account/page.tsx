@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
+  LogOut,
+  Lock,
   User,
   Package,
   MapPin,
@@ -26,11 +28,15 @@ import {
 import { useOrdersStore, DetailedOrder } from '@/stores/orders-store';
 import { useWishlistStore } from '@/stores/wishlist-store';
 import { useCartStore } from '@/stores/cart-store';
+import { useAuthStore } from '@/stores/auth-store';
+import { AuthModal } from '@/components/auth/AuthModal';
 
 export default function AccountPage() {
   const [activeTab, setActiveTab] = useState<'orders' | 'profile' | 'wishlist'>('orders');
   
-  // Persistent orders & wishlist
+  // Auth & Persistent stores
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const { user, isLoggedIn, logout, updateProfile } = useAuthStore();
   const { orders } = useOrdersStore();
   const { items: wishlistItems, toggleWishlist } = useWishlistStore();
   const { addItem, openCart } = useCartStore();
@@ -41,19 +47,48 @@ export default function AccountPage() {
 
   // Profile Form State
   const [profile, setProfile] = useState({
-    name: 'Rama Aditya',
-    email: 'rama@gmail.com',
-    phone: '081298765432',
-    recipientName: 'Rama Aditya',
-    addressLine: 'Jl. Senopati No. 45, Kebayoran Baru',
-    city: 'Jakarta Selatan',
+    name: user?.name || 'Rama Aditya',
+    email: user?.email || 'rama@gmail.com',
+    phone: user?.phone || '081298765432',
+    recipientName: user?.name || 'Rama Aditya',
+    addressLine: user?.address || 'Jl. Senopati No. 45, Kebayoran Baru',
+    city: user?.city || 'Jakarta Selatan',
     province: 'DKI Jakarta',
-    postalCode: '12190',
+    postalCode: user?.postalCode || '12190',
   });
+
+  useEffect(() => {
+    if (user) {
+      setProfile((prev) => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+        recipientName: user.name || prev.recipientName,
+        addressLine: user.address || prev.addressLine,
+        city: user.city || prev.city,
+        postalCode: user.postalCode || prev.postalCode,
+      }));
+    }
+  }, [user]);
+
+  const handleLogout = () => {
+    if (confirm('Apakah Anda yakin ingin keluar dari akun Ramille?')) {
+      logout();
+    }
+  };
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
+    updateProfile({
+      name: profile.name,
+      email: profile.email,
+      phone: profile.phone,
+      address: profile.addressLine,
+      city: profile.city,
+      postalCode: profile.postalCode,
+    });
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2500);
   };
@@ -108,6 +143,25 @@ export default function AccountPage() {
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Kembali Berbelanja</span>
             </Link>
+
+            {isLoggedIn ? (
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center space-x-1.5 text-xs font-semibold text-rose-700 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 px-4 py-2 rounded-full transition-all cursor-pointer"
+                title="Keluar dari akun"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Keluar</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsAuthOpen(true)}
+                className="inline-flex items-center space-x-1.5 text-xs font-semibold text-white bg-[#1E1A17] hover:bg-[#332D28] px-4 py-2 rounded-full transition-all cursor-pointer shadow-xs"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Masuk Akun</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -714,6 +768,7 @@ export default function AccountPage() {
         </div>
       )}
 
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </div>
   );
 }

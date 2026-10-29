@@ -1,14 +1,16 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
-import { X, Trash2, Plus, Minus, ArrowRight, Tag, Check, ShoppingBag } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ArrowRight, Tag, Check, ShoppingBag, Lock } from 'lucide-react';
 import { useCartStore } from '@/stores/cart-store';
+import { useAuthStore } from '@/stores/auth-store';
 
 interface CartDrawerProps {
   onProceedToCheckout: () => void;
+  onOpenAuth?: () => void;
 }
 
-export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
+export function CartDrawer({ onProceedToCheckout, onOpenAuth }: CartDrawerProps) {
   const {
     items,
     isOpen,
@@ -25,6 +27,7 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
     getTotalAmount,
   } = useCartStore();
 
+  const { isLoggedIn } = useAuthStore();
   const [couponInput, setCouponInput] = useState('');
   const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
 
@@ -49,57 +52,69 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
     }
   };
 
+  const handleCheckoutClick = () => {
+    if (!isLoggedIn) {
+      closeCart();
+      if (onOpenAuth) {
+        onOpenAuth();
+      }
+      return;
+    }
+    closeCart();
+    onProceedToCheckout();
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div
         onClick={closeCart}
-        className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-300"
+        className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-300"
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-[#FAF7F2] shadow-2xl flex flex-col justify-between">
+        <div className="w-screen max-w-md bg-[#FAF7F2] border-l border-[#E3DBD0] shadow-2xl flex flex-col justify-between">
           
-          {/* Drawer Header */}
+          {/* Header */}
           <div className="p-6 border-b border-[#E3DBD0] flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-xl font-serif text-[#8A6B4F]">✻</span>
+              <ShoppingBag className="w-5 h-5 text-[#8A6B4F]" />
               <h2 className="text-xl font-serif text-[#1E1A17]">Keranjang Belanja</h2>
-              <span className="text-xs bg-[#EDE7DE] px-2 py-0.5 rounded-full text-[#70655B] font-semibold">
-                {items.length}
-              </span>
+              <span className="text-xs text-[#70655B] font-medium">({items.length} item)</span>
             </div>
             <button
               onClick={closeCart}
-              className="p-2 rounded-full hover:bg-[#EDE7DE] text-[#70655B] hover:text-[#1E1A17] transition-colors cursor-pointer"
+              className="p-1.5 rounded-full hover:bg-[#EDE7DE] text-[#70655B] hover:text-[#1E1A17] transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Free Shipping Progress Indicator */}
-          <div className="bg-[#EDE7DE]/70 px-6 py-3 border-b border-[#E3DBD0]">
-            <div className="flex justify-between items-center text-xs mb-1.5 font-medium">
-              <span className="text-[#1E1A17]">
-                {progressPercent >= 100
-                  ? 'Selamat! Anda berhak Bebas Ongkir'
-                  : 'Tambah Rp ' + remainingForFreeShipping.toLocaleString('id-ID') + ' lagi untuk Bebas Ongkir'}
+          {/* Free Shipping Progress */}
+          <div className="bg-[#EDE7DE]/50 px-6 py-3 border-b border-[#E3DBD0]">
+            <div className="flex justify-between text-xs text-[#70655B] mb-1.5">
+              <span>
+                {progressPercent >= 100 ? (
+                  <span className="text-emerald-700 font-semibold">Selamat! Anda mendapatkan Gratis Ongkir</span>
+                ) : (
+                  <>Tambah <span className="font-semibold text-[#1E1A17]">Rp {remainingForFreeShipping.toLocaleString('id-ID')}</span> lagi untuk Gratis Ongkir</>
+                )}
               </span>
-              <span className="text-[#8A6B4F] font-bold">{progressPercent}%</span>
+              <span className="font-semibold text-[#1E1A17]">{progressPercent}%</span>
             </div>
-            <div className="w-full h-1.5 bg-white/80 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-[#E3DBD0] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#8A6B4F] transition-all duration-500 rounded-full"
-                style={{ width: progressPercent + '%' }}
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>
 
-          {/* Cart Items List */}
+          {/* Items List */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {items.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center py-12 space-y-4">
-                <div className="w-16 h-16 rounded-full bg-[#EDE7DE] flex items-center justify-center text-[#70655B]">
+              <div className="h-full flex flex-col items-center justify-center text-center space-y-3 py-12">
+                <div className="w-16 h-16 rounded-full bg-[#EDE7DE] flex items-center justify-center text-[#8A6B4F]">
                   <ShoppingBag className="w-8 h-8 stroke-[1.5]" />
                 </div>
                 <h3 className="text-lg font-serif text-[#1E1A17]">Keranjang Anda Kosong</h3>
@@ -248,16 +263,30 @@ export function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
                 </div>
               </div>
 
+              {/* Login requirement notification if not logged in */}
+              {!isLoggedIn && (
+                <div className="flex items-center space-x-2 text-[11px] text-[#8A6B4F] bg-[#FAF7F2] p-2.5 rounded-xl border border-[#8A6B4F]/30">
+                  <Lock className="w-4 h-4 shrink-0" />
+                  <span>Anda harus masuk ke akun sebelum melanjutkan checkout.</span>
+                </div>
+              )}
+
               {/* Checkout CTA Button */}
               <button
-                onClick={() => {
-                  closeCart();
-                  onProceedToCheckout();
-                }}
+                onClick={handleCheckoutClick}
                 className="w-full py-3.5 px-4 rounded-full bg-[#1E1A17] hover:bg-[#332D28] text-white text-sm font-medium tracking-wide flex items-center justify-center space-x-2 transition-all shadow-md cursor-pointer group"
               >
-                <span>Lanjut ke Pembayaran</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                {isLoggedIn ? (
+                  <>
+                    <span>Lanjut ke Pembayaran</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4" />
+                    <span>Masuk untuk Checkout</span>
+                  </>
+                )}
               </button>
 
             </div>
