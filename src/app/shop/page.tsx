@@ -14,6 +14,7 @@ import { PRODUCTS } from '@/data/products';
 import { Product } from '@/types';
 import { useCartStore } from '@/stores/cart-store';
 import { useWishlistStore } from '@/stores/wishlist-store';
+import { useMounted } from '@/hooks/use-mounted';
 import { ShoppingBag, Heart, Star, SlidersHorizontal, Grid3X3, LayoutList, ChevronDown } from 'lucide-react';
 
 const CATEGORIES = ['All', 'Apparel & Linen', 'Skincare & Botanicals', 'Leather Goods', 'Home Sanctuary', 'Jewelry & Accents'];
@@ -40,6 +41,7 @@ export default function ShopPage() {
 
   const { addItem } = useCartStore();
   const { toggleWishlist, isInWishlist } = useWishlistStore();
+  const isMounted = useMounted();
 
   const filteredProducts = useMemo(() => {
     let result = [...PRODUCTS];
@@ -190,9 +192,9 @@ export default function ShopPage() {
                   )}
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleWishlist(product); }}
-                    className={`absolute bottom-3 right-3 p-2.5 rounded-full backdrop-blur-sm transition-all cursor-pointer ${isInWishlist(product.id) ? 'bg-[#8A6B4F] text-white' : 'bg-white/80 text-[#70655B] hover:bg-white'}`}
+                    className={`absolute bottom-3 right-3 p-2.5 rounded-full backdrop-blur-sm transition-all cursor-pointer ${(isMounted && isInWishlist(product.id)) ? 'bg-[#8A6B4F] text-white' : 'bg-white/80 text-[#70655B] hover:bg-white'}`}
                   >
-                    <Heart className={`w-4 h-4 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
+                    <Heart className={`w-4 h-4 ${(isMounted && isInWishlist(product.id)) ? 'fill-current' : ''}`} />
                   </button>
                 </div>
                 <div className="p-4">
@@ -244,9 +246,9 @@ export default function ShopPage() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => toggleWishlist(product)}
-                        className={`p-2.5 rounded-full border transition-all cursor-pointer ${isInWishlist(product.id) ? 'border-[#8A6B4F] bg-[#8A6B4F] text-white' : 'border-[#D5CDC3] text-[#70655B] hover:bg-[#EDE7DE]'}`}
+                        className={`p-2.5 rounded-full border transition-all cursor-pointer ${(isMounted && isInWishlist(product.id)) ? 'border-[#8A6B4F] bg-[#8A6B4F] text-white' : 'border-[#D5CDC3] text-[#70655B] hover:bg-[#EDE7DE]'}`}
                       >
-                        <Heart className={`w-4 h-4 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
+                        <Heart className={`w-4 h-4 ${(isMounted && isInWishlist(product.id)) ? 'fill-current' : ''}`} />
                       </button>
                       <button
                         onClick={() => addItem(product)}

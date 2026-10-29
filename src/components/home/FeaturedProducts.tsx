@@ -6,6 +6,7 @@ import { PRODUCTS } from '@/data/products';
 import { Product } from '@/types';
 import { useCartStore } from '@/stores/cart-store';
 import { useWishlistStore } from '@/stores/wishlist-store';
+import { useMounted } from '@/hooks/use-mounted';
 
 interface FeaturedProductsProps {
   selectedCategory: string | null;
@@ -17,6 +18,7 @@ export function FeaturedProducts({ selectedCategory, onClearCategory, onQuickVie
   const [activeTab, setActiveTab] = useState<string>('All');
   const { addItem } = useCartStore();
   const { toggleWishlist, isInWishlist } = useWishlistStore();
+  const isMounted = useMounted();
 
   const tabs = ['All', 'Apparel & Linen', 'Skincare & Botanicals', 'Leather Goods', 'Home Sanctuary'];
 
@@ -72,7 +74,7 @@ export function FeaturedProducts({ selectedCategory, onClearCategory, onQuickVie
       {/* Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
         {filtered.map((product) => {
-          const isWish = isInWishlist(product.id);
+          const isWish = isMounted ? isInWishlist(product.id) : false;
           const formattedPrice = 'Rp ' + product.price.toLocaleString('id-ID');
           const formattedOriginal = product.originalPrice ? 'Rp ' + product.originalPrice.toLocaleString('id-ID') : null;
 

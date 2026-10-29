@@ -7,6 +7,7 @@ import { Search, Heart, User, ShoppingBag, LogOut } from 'lucide-react';
 import { useCartStore } from '@/stores/cart-store';
 import { useWishlistStore } from '@/stores/wishlist-store';
 import { useAuthStore } from '@/stores/auth-store';
+import { useMounted } from '@/hooks/use-mounted';
 
 interface NavbarProps {
   onOpenSearch: () => void;
@@ -26,7 +27,10 @@ export function Navbar({ onOpenSearch, onOpenAuth, onOpenWishlist }: NavbarProps
   const { openCart, getItemCount } = useCartStore();
   const wishlistItems = useWishlistStore((s) => s.items);
   const { user, isLoggedIn, logout } = useAuthStore();
-  const itemCount = getItemCount();
+  const isMounted = useMounted();
+  const itemCount = isMounted ? getItemCount() : 0;
+  const wishlistCount = isMounted ? wishlistItems.length : 0;
+  const loggedIn = isMounted ? isLoggedIn : false;
   const pathname = usePathname();
 
   const handleLogout = () => {
@@ -88,15 +92,15 @@ export function Navbar({ onOpenSearch, onOpenAuth, onOpenWishlist }: NavbarProps
               className="p-2 hover:bg-[#EDE7DE] rounded-full transition-colors relative cursor-pointer"
             >
               <Heart className="w-5 h-5 stroke-[1.5]" />
-              {wishlistItems.length > 0 && (
+              {wishlistCount > 0 && (
                 <span className="absolute top-1 right-1 w-4 h-4 bg-[#8A6B4F] text-white text-[10px] font-semibold flex items-center justify-center rounded-full">
-                  {wishlistItems.length}
+                  {wishlistCount}
                 </span>
               )}
             </button>
 
             {/* User Account / Profile / Logout */}
-            {isLoggedIn ? (
+            {loggedIn ? (
               <div className="flex items-center space-x-1 sm:space-x-1.5 bg-[#EDE7DE]/60 p-1 pl-1.5 pr-1.5 rounded-full border border-[#E3DBD0]/80">
                 <Link
                   href="/account"
