@@ -1,3 +1,9 @@
+if (typeof window !== 'undefined') {
+  try {
+    localStorage.removeItem('ramille-wishlist-storage');
+  } catch (e) {}
+}
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Product } from '@/types';
@@ -29,7 +35,7 @@ export const useWishlistStore = create<WishlistState>()(
       clearWishlist: () => set({ items: [] }),
     }),
     {
-      name: 'ramille-wishlist-storage',
+      name: 'ramille-wishlist-v2',
     }
   )
 );

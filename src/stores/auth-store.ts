@@ -46,6 +46,14 @@ export const useAuthStore = create<AuthState>()(
           isLoggedIn: false,
           user: null,
         });
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.removeItem('ramille-cart-v2');
+            localStorage.removeItem('ramille-wishlist-v2');
+            localStorage.removeItem('ramille-cart-storage');
+            localStorage.removeItem('ramille-wishlist-storage');
+          } catch (e) {}
+        }
       },
       updateProfile: (data) => {
         set((state) => ({

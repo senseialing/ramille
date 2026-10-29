@@ -1,3 +1,10 @@
+if (typeof window !== 'undefined') {
+  try {
+    localStorage.removeItem('ramille-cart-storage');
+    localStorage.removeItem('ramille-wishlist-storage');
+  } catch (e) {}
+}
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Product, CartItem, Coupon } from '@/types';
@@ -31,28 +38,7 @@ interface CartState {
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
-      items: [
-        {
-          product: {
-            id: 'prod-1',
-            name: 'Linen Oversized Trench Coat',
-            slug: 'linen-oversized-trench-coat',
-            subtitle: 'Pure European Flax • Tailored in Sandstone',
-            description: 'A flowing, architectural outerwear piece cut from premium pre-washed French flax linen.',
-            price: 1450000,
-            originalPrice: 1750000,
-            stock: 15,
-            category: 'Apparel & Linen',
-            categorySlug: 'apparel-linen',
-            images: [
-              'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=900&q=80',
-            ],
-            rating: 4.9,
-            reviewCount: 38,
-          },
-          quantity: 1,
-        },
-      ],
+      items: [],
       isOpen: false,
       appliedCoupon: null,
       couponError: null,
@@ -164,7 +150,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: 'ramille-cart-storage',
+      name: 'ramille-cart-v2',
       partialize: (state) => ({ items: state.items, appliedCoupon: state.appliedCoupon }),
     }
   )
