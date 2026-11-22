@@ -306,6 +306,7 @@ interface OrdersState {
   orders: DetailedOrder[];
   addOrder: (order: DetailedOrder) => void;
   updateOrderStatus: (orderId: string, status: DetailedOrder['orderStatus'], location?: string) => void;
+  confirmPayment: (orderId: string) => void;
   getOrderById: (orderId: string) => DetailedOrder | undefined;
 }
 
@@ -317,6 +318,39 @@ export const useOrdersStore = create<OrdersState>()(
       addOrder: (newOrder: DetailedOrder) => {
         set((state) => ({
           orders: [newOrder, ...state.orders],
+        }));
+      },
+
+      confirmPayment: (orderId: string) => {
+        set((state) => ({
+          orders: state.orders.map((o) => {
+            if (o.id === orderId) {
+              const updatedHistory = o.trackingHistory.map((step) => {
+                if (step.title.toLowerCase().includes('menunggu')) {
+                  return { ...step, completed: true, current: false };
+                }
+                return step;
+              });
+
+              updatedHistory.push({
+                title: 'Pembayaran Lunas Diverifikasi',
+                description: 'Pembayaran telah sukses diverifikasi (Settlement) via Midtrans.',
+                location: 'Midtrans Payment Gateway',
+                timestamp: 'Hari ini, ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB',
+                completed: true,
+                current: true,
+              });
+
+              return {
+                ...o,
+                paymentStatus: 'settlement',
+                orderStatus: 'processing',
+                currentLocation: 'Pembayaran lunas terverifikasi. Pesanan sedang disiapkan & dikemas di Atelier Ramille.',
+                trackingHistory: updatedHistory,
+              };
+            }
+            return o;
+          }),
         }));
       },
 

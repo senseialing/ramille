@@ -38,7 +38,7 @@ export default function AdminPage() {
   const [couponsList, setCouponsList] = useState(AVAILABLE_COUPONS);
 
   // Zustand persistent orders
-  const { orders: ordersList, updateOrderStatus } = useOrdersStore();
+  const { orders: ordersList, updateOrderStatus, confirmPayment } = useOrdersStore();
 
   // Selected Order for Tracking & Detail Modal
   const [selectedOrder, setSelectedOrder] = useState<DetailedOrder | null>(null);
@@ -565,6 +565,24 @@ export default function AdminPage() {
                             Detail & Lacak
                           </button>
                           
+                          {order.paymentStatus === 'pending' && (
+                            <button
+                              onClick={() => {
+                                confirmPayment(order.id);
+                                if (selectedOrder?.id === order.id) {
+                                  setSelectedOrder({
+                                    ...selectedOrder,
+                                    paymentStatus: 'settlement',
+                                    orderStatus: 'processing',
+                                  });
+                                }
+                              }}
+                              className="px-2.5 py-1 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-[10px] font-semibold transition-colors cursor-pointer"
+                            >
+                              ✓ Tandai Lunas
+                            </button>
+                          )}
+
                           {order.orderStatus === 'processing' && (
                             <button
                               onClick={() => updateOrderStatus(order.id, 'shipped', 'Paket diserahkan ke kurir JNE dan sedang dalam perjalanan')}
@@ -799,10 +817,99 @@ export default function AdminPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#E3DBD0] bg-white flex justify-end">
+            <div className="p-4 border-t border-[#E3DBD0] bg-white flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {selectedOrder.paymentStatus === 'pending' && (
+                  <button
+                    onClick={() => {
+                      confirmPayment(selectedOrder.id);
+                      setSelectedOrder({
+                        ...selectedOrder,
+                        paymentStatus: 'settlement',
+                        orderStatus: 'processing',
+                        currentLocation: 'Pembayaran lunas terverifikasi. Pesanan sedang disiapkan & dikemas di Atelier Ramille.',
+                        trackingHistory: [
+                          ...selectedOrder.trackingHistory.map((s) =>
+                            s.title.toLowerCase().includes('menunggu') ? { ...s, completed: true, current: false } : s
+                          ),
+                          {
+                            title: 'Pembayaran Lunas Diverifikasi',
+                            description: 'Pembayaran sukses diverifikasi via Midtrans Sandbox.',
+                            location: 'Midtrans Payment Gateway',
+                            timestamp: 'Hari ini, ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB',
+                            completed: true,
+                            current: true,
+                          },
+                        ],
+                      });
+                    }}
+                    className="px-4 py-2 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center space-x-1.5 cursor-pointer shadow-xs transition-all"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Konfirmasi Pembayaran Lunas (Settlement)</span>
+                  </button>
+                )}
+
+                {selectedOrder.orderStatus === 'processing' && selectedOrder.paymentStatus === 'settlement' && (
+                  <button
+                    onClick={() => {
+                      updateOrderStatus(selectedOrder.id, 'shipped', 'Paket diserahkan ke kurir JNE Express dan sedang dalam perjalanan.');
+                      setSelectedOrder({
+                        ...selectedOrder,
+                        orderStatus: 'shipped',
+                        currentLocation: 'Paket diserahkan ke kurir JNE Express dan sedang dalam perjalanan.',
+                        trackingHistory: [
+                          ...selectedOrder.trackingHistory,
+                          {
+                            title: 'Paket Sedang Diantar Kurir',
+                            description: 'Paket diserahkan ke kurir JNE Express dan sedang dalam perjalanan.',
+                            location: 'Drop Point JNE Kemang',
+                            timestamp: 'Hari ini, ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB',
+                            completed: true,
+                            current: true,
+                          },
+                        ],
+                      });
+                    }}
+                    className="px-4 py-2 rounded-full bg-[#1E1A17] hover:bg-[#332D28] text-white text-xs font-semibold flex items-center space-x-1.5 cursor-pointer shadow-xs transition-all"
+                  >
+                    <Truck className="w-3.5 h-3.5" />
+                    <span>Kirim Barang (Keluarkan Resi)</span>
+                  </button>
+                )}
+
+                {selectedOrder.orderStatus === 'shipped' && (
+                  <button
+                    onClick={() => {
+                      updateOrderStatus(selectedOrder.id, 'completed', 'Paket telah sampai dan diterima dengan aman oleh pembeli.');
+                      setSelectedOrder({
+                        ...selectedOrder,
+                        orderStatus: 'completed',
+                        currentLocation: 'Paket telah sampai dan diterima dengan aman oleh pembeli.',
+                        trackingHistory: [
+                          ...selectedOrder.trackingHistory,
+                          {
+                            title: 'Pesanan Selesai & Diterima',
+                            description: 'Paket telah sampai dan diterima dengan aman oleh pembeli.',
+                            location: 'Alamat Tujuan Pembeli',
+                            timestamp: 'Hari ini, ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB',
+                            completed: true,
+                            current: true,
+                          },
+                        ],
+                      });
+                    }}
+                    className="px-4 py-2 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center space-x-1.5 cursor-pointer shadow-xs transition-all"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Selesaikan Pesanan (Diterima)</span>
+                  </button>
+                )}
+              </div>
+
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="px-6 py-2.5 rounded-full bg-[#1E1A17] hover:bg-[#332D28] text-white text-xs font-semibold cursor-pointer"
+                className="px-6 py-2 rounded-full border border-[#E3DBD0] text-[#70655B] hover:text-[#1E1A17] hover:bg-[#FAF7F2] text-xs font-semibold cursor-pointer transition-colors"
               >
                 Tutup
               </button>
