@@ -35,6 +35,21 @@ interface CartState {
   getTotalAmount: () => number;
 }
 
+const syncUserCart = (items: CartItem[]) => {
+  if (typeof window !== 'undefined') {
+    try {
+      const authRaw = localStorage.getItem('ramille-auth-storage');
+      if (authRaw) {
+        const parsed = JSON.parse(authRaw);
+        const email = parsed?.state?.user?.email;
+        if (email) {
+          localStorage.setItem('ramille-cart-user-' + email.trim().toLowerCase(), JSON.stringify(items));
+        }
+      }
+    } catch (e) {}
+  }
+};
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -53,45 +68,51 @@ export const useCartStore = create<CartState>()(
             (item) => item.product.id === product.id && item.selectedVariant === selectedVariant
           );
 
+          let updated: CartItem[];
           if (existingIndex > -1) {
-            const updated = [...state.items];
+            updated = [...state.items];
             const currentQty = updated[existingIndex].quantity;
             const newQty = Math.min(currentQty + quantity, product.stock);
             updated[existingIndex] = { ...updated[existingIndex], quantity: newQty };
-            return { items: updated, isOpen: true };
           } else {
-            return {
-              items: [...state.items, { product, quantity: Math.min(quantity, product.stock), selectedVariant }],
-              isOpen: true,
-            };
+            updated = [...state.items, { product, quantity: Math.min(quantity, product.stock), selectedVariant }];
           }
+          syncUserCart(updated);
+          return { items: updated, isOpen: true };
         });
       },
 
       removeItem: (productId: string) => {
-        set((state) => ({
-          items: state.items.filter((item) => item.product.id !== productId),
-        }));
+        set((state) => {
+          const updated = state.items.filter((item) => item.product.id !== productId);
+          syncUserCart(updated);
+          return { items: updated };
+        });
       },
 
       updateQuantity: (productId: string, quantity: number) => {
         set((state) => {
+          let updated: CartItem[];
           if (quantity <= 0) {
-            return { items: state.items.filter((item) => item.product.id !== productId) };
-          }
-          return {
-            items: state.items.map((item) => {
+            updated = state.items.filter((item) => item.product.id !== productId);
+          } else {
+            updated = state.items.map((item) => {
               if (item.product.id === productId) {
                 const maxStock = item.product.stock;
                 return { ...item, quantity: Math.min(quantity, maxStock) };
               }
               return item;
-            }),
-          };
+            });
+          }
+          syncUserCart(updated);
+          return { items: updated };
         });
       },
 
-      clearCart: () => set({ items: [], appliedCoupon: null, couponError: null }),
+      clearCart: () => {
+        syncUserCart([]);
+        set({ items: [], appliedCoupon: null, couponError: null });
+      },
 
       applyCoupon: (code: string) => {
         const trimmed = code.trim().toUpperCase();

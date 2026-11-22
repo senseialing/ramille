@@ -85,13 +85,13 @@ export function CheckoutModal({ isOpen, onClose, onOpenAuth }: CheckoutModalProp
       // If window.snap is available and valid token exists
       if (typeof window !== 'undefined' && (window as any).snap && data.token && !data.simulated) {
         (window as any).snap.pay(data.token, {
-          onSuccess: () => {
-            setPaymentStep('success');
-            clearCart();
+          onSuccess: (result: any) => {
+            const payType = result?.payment_type ? result.payment_type.toUpperCase() : 'Midtrans Snap';
+            recordOrderAndFinish('Midtrans (' + payType + ')', 'settlement', 'Lunas diverifikasi otomatis via Midtrans Snap');
           },
-          onPending: () => {
-            setPaymentStep('success');
-            clearCart();
+          onPending: (result: any) => {
+            const payType = result?.payment_type ? result.payment_type.toUpperCase() : 'Midtrans Snap';
+            recordOrderAndFinish('Midtrans (' + payType + ')', 'pending', 'Menunggu transfer / pelunasan pembeli');
           },
           onError: () => {
             alert('Pembayaran gagal atau dibatalkan.');
@@ -114,18 +114,20 @@ export function CheckoutModal({ isOpen, onClose, onOpenAuth }: CheckoutModalProp
     }
   };
 
-  const handleSimulateSuccess = () => {
-    const finalMethod = selectedMethod === 'qris' 
-      ? 'QRIS (GoPay)' 
-      : selectedMethod === 'bca_va' 
-      ? 'BCA Virtual Account' 
-      : 'Kartu Kredit (Visa/Mastercard)';
+  const recordOrderAndFinish = (
+    methodName: string,
+    status: 'settlement' | 'pending' = 'settlement',
+    details: string = 'Midtrans Verified'
+  ) => {
+    const userEmail = (user?.email || 'customer@ramille.com').trim().toLowerCase();
+    const customerName = formData.name || user?.name || 'Pelanggan Ramille';
+    const customerPhone = formData.phone || user?.phone || '081298765432';
 
     addOrder({
       id: simulatedOrderId,
-      customerName: formData.name,
-      customerEmail: user?.email || 'customer@ramille.com',
-      customerPhone: formData.phone,
+      customerName,
+      customerEmail: userEmail,
+      customerPhone,
       items: (items || [])
         .filter((it) => it && it.product)
         .map((it) => ({
@@ -137,54 +139,79 @@ export function CheckoutModal({ isOpen, onClose, onOpenAuth }: CheckoutModalProp
           image: (it.product?.images && it.product.images[0]) || 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=80',
         })),
       shippingAddress: {
-        recipientName: formData.name,
-        phone: formData.phone,
-        addressLine: formData.address,
-        city: formData.city,
-        postalCode: formData.postalCode,
+        recipientName: customerName,
+        phone: customerPhone,
+        addressLine: formData.address || user?.address || 'Jl. Senopati No. 45',
+        city: formData.city || user?.city || 'Jakarta Selatan',
+        postalCode: formData.postalCode || user?.postalCode || '12190',
       },
       subtotal,
       discount,
       shippingFee: shipping,
       total,
-      paymentStatus: 'settlement',
-      paymentMethod: finalMethod as any,
-      paymentDetails: selectedMethod === 'bca_va' ? 'VA: 80777 ' + formData.phone : 'Midtrans Verified',
+      paymentStatus: status,
+      paymentMethod: methodName as any,
+      paymentDetails: details,
       paymentDate: 'Hari ini, ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB',
-      orderStatus: 'processing',
+      orderStatus: status === 'settlement' ? 'processing' : 'pending_payment',
       courier: 'JNE Express (Reguler)',
       trackingNumber: 'JNE-' + simulatedOrderId + 'ID',
-      currentLocation: 'Pesanan sedang disiapkan & dikemas dengan aman di Atelier Ramille',
+      currentLocation: status === 'settlement' 
+        ? 'Pesanan sedang disiapkan & dikemas dengan aman di Atelier Ramille'
+        : 'Menunggu verifikasi transfer pembayaran oleh pelanggan',
       estimatedArrival: '1-2 hari kerja',
       createdAt: 'Hari ini, ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB',
       trackingHistory: [
         {
           title: 'Pesanan Berhasil Dibuat',
-          description: 'Pesanan telah masuk ke sistem Ramille Store.',
+          description: 'Pesanan telah masuk ke sistem antrian Ramille Store & Admin.',
           location: 'Sistem Ramille Store',
           timestamp: 'Baru saja',
           completed: true,
         },
         {
-          title: 'Pembayaran Lunas Diverifikasi',
-          description: 'Pembayaran diverifikasi otomatis via Midtrans Sandbox (' + finalMethod + ').',
+          title: status === 'settlement' ? 'Pembayaran Lunas Diverifikasi' : 'Menunggu Pelunasan',
+          description: status === 'settlement'
+            ? 'Pembayaran sukses diverifikasi via ' + methodName + '.'
+            : 'Menunggu transfer dari pelanggan via ' + methodName + '.',
           location: 'Midtrans Payment Gateway',
           timestamp: 'Baru saja',
-          completed: true,
+          completed: status === 'settlement',
           current: true,
         },
         {
           title: 'Sedang Dikemas di Atelier',
           description: 'Tim kami sedang mengemas produk dengan Ramille Luxury Eco-Box.',
-          location: 'Atelier Warehouse Ramille',
+          location: 'Atelier Warehouse Kemang',
           timestamp: 'Estimasi: Beberapa saat lagi',
           completed: false,
         },
       ],
     });
 
+    // Clear user isolated cart as well
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('ramille-cart-user-' + userEmail);
+      } catch (e) {}
+    }
+
     setPaymentStep('success');
     clearCart();
+  };
+
+  const handleSimulateSuccess = () => {
+    const finalMethod = selectedMethod === 'qris' 
+      ? 'QRIS (GoPay)' 
+      : selectedMethod === 'bca_va' 
+      ? 'BCA Virtual Account' 
+      : 'Kartu Kredit (Visa/Mastercard)';
+
+    recordOrderAndFinish(
+      finalMethod,
+      'settlement',
+      selectedMethod === 'bca_va' ? 'VA: 80777 ' + formData.phone : 'Midtrans Verified (Simulasi)'
+    );
   };
 
   return (
