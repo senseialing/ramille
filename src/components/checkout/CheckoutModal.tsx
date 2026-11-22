@@ -42,10 +42,10 @@ export function CheckoutModal({ isOpen, onClose, onOpenAuth }: CheckoutModalProp
 
   if (!isOpen) return null;
 
-  const subtotal = getSubtotal();
-  const discount = getDiscountAmount();
-  const shipping = getShippingFee();
-  const total = getTotalAmount();
+  const subtotal = getSubtotal() || 0;
+  const discount = getDiscountAmount() || 0;
+  const shipping = getShippingFee() || 0;
+  const total = getTotalAmount() || 0;
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,14 +127,16 @@ export function CheckoutModal({ isOpen, onClose, onOpenAuth }: CheckoutModalProp
       customerName: formData.name,
       customerEmail: user?.email || 'customer@ramille.com',
       customerPhone: formData.phone,
-      items: items.map(it => ({
-        id: it.product.id,
-        name: it.product.name,
-        category: it.product.category,
-        price: it.product.price,
-        quantity: it.quantity,
-        image: it.product.images[0] || 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=80',
-      })),
+      items: (items || [])
+        .filter((it) => it && it.product)
+        .map((it) => ({
+          id: it.product?.id || 'item-' + Math.random(),
+          name: it.product?.name || 'Produk Ramille',
+          category: it.product?.category || 'Fashion',
+          price: it.product?.price || 0,
+          quantity: it.quantity || 1,
+          image: (it.product?.images && it.product.images[0]) || 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=80',
+        })),
       shippingAddress: {
         recipientName: formData.name,
         phone: formData.phone,
@@ -251,7 +253,7 @@ export function CheckoutModal({ isOpen, onClose, onOpenAuth }: CheckoutModalProp
               <div className="mb-6 p-3 bg-white rounded-xl border border-[#E3DBD0] flex items-center justify-between text-xs">
                 <div className="flex items-center space-x-2 text-[#70655B]">
                   <UserCheck className="w-4 h-4 text-emerald-600" />
-                  <span>Checkout sebagai <strong className="text-[#1E1A17]">{user?.name}</strong> ({user?.email})</span>
+                  <span>Checkout sebagai <strong className="text-[#1E1A17]">{user?.name || 'Pelanggan'}</strong> ({user?.email || 'customer@ramille.com'})</span>
                 </div>
                 <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">
                   Akun Terverifikasi
@@ -323,17 +325,19 @@ export function CheckoutModal({ isOpen, onClose, onOpenAuth }: CheckoutModalProp
                   {/* Order Items Preview */}
                   <div>
                     <h4 className="text-sm font-bold uppercase tracking-wider text-[#1E1A17] mb-3">
-                      2. Ringkasan Pesanan ({items.length} item)
+                      2. Ringkasan Pesanan ({(items || []).filter(item => item && item.product).length} item)
                     </h4>
                     <div className="bg-white rounded-xl border border-[#E3DBD0] p-4 divide-y divide-[#E3DBD0]/60 max-h-40 overflow-y-auto">
-                      {items.map((item) => (
-                        <div key={item.product.id} className="py-2 first:pt-0 last:pb-0 flex justify-between items-center text-xs">
+                      {(items || [])
+                        .filter((item) => item && item.product)
+                        .map((item, idx) => (
+                        <div key={item.product?.id || idx} className="py-2 first:pt-0 last:pb-0 flex justify-between items-center text-xs">
                           <div>
-                            <span className="font-medium text-[#1E1A17]">{item.product.name}</span>
-                            <span className="text-[#70655B] ml-2">x{item.quantity}</span>
+                            <span className="font-medium text-[#1E1A17]">{item.product?.name || 'Produk Ramille'}</span>
+                            <span className="text-[#70655B] ml-2">x{item.quantity || 1}</span>
                           </div>
                           <span className="font-semibold text-[#1E1A17]">
-                            {'Rp ' + (item.product.price * item.quantity).toLocaleString('id-ID')}
+                            {'Rp ' + ((item.product?.price || 0) * (item.quantity || 1)).toLocaleString('id-ID')}
                           </span>
                         </div>
                       ))}
@@ -344,21 +348,21 @@ export function CheckoutModal({ isOpen, onClose, onOpenAuth }: CheckoutModalProp
                   <div className="bg-[#EDE7DE] rounded-xl p-4 space-y-1.5 text-xs">
                     <div className="flex justify-between text-[#70655B]">
                       <span>Subtotal</span>
-                      <span>{'Rp ' + subtotal.toLocaleString('id-ID')}</span>
+                      <span>{'Rp ' + (subtotal || 0).toLocaleString('id-ID')}</span>
                     </div>
                     {discount > 0 && (
                       <div className="flex justify-between text-emerald-700 font-medium">
                         <span>Diskon Promo</span>
-                        <span>{'- Rp ' + discount.toLocaleString('id-ID')}</span>
+                        <span>{'- Rp ' + (discount || 0).toLocaleString('id-ID')}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-[#70655B]">
                       <span>Biaya Pengiriman</span>
-                      <span>{shipping === 0 ? 'GRATIS' : 'Rp ' + shipping.toLocaleString('id-ID')}</span>
+                      <span>{shipping === 0 ? 'GRATIS' : 'Rp ' + (shipping || 0).toLocaleString('id-ID')}</span>
                     </div>
                     <div className="flex justify-between text-base font-bold text-[#1E1A17] pt-2 border-t border-[#D8CFC3]">
                       <span>Total Tagihan</span>
-                      <span className="text-[#8A6B4F]">{'Rp ' + total.toLocaleString('id-ID')}</span>
+                      <span className="text-[#8A6B4F]">{'Rp ' + (total || 0).toLocaleString('id-ID')}</span>
                     </div>
                   </div>
 
@@ -371,7 +375,7 @@ export function CheckoutModal({ isOpen, onClose, onOpenAuth }: CheckoutModalProp
                     type="submit"
                     className="w-full py-4 rounded-full bg-[#1E1A17] hover:bg-[#332D28] text-white text-sm font-semibold tracking-wide transition-all shadow-md cursor-pointer flex items-center justify-center space-x-2"
                   >
-                    <span>Bayar Sekarang ({ 'Rp ' + total.toLocaleString('id-ID') })</span>
+                    <span>Bayar Sekarang ({ 'Rp ' + (total || 0).toLocaleString('id-ID') })</span>
                   </button>
 
                 </form>
@@ -400,7 +404,7 @@ export function CheckoutModal({ isOpen, onClose, onOpenAuth }: CheckoutModalProp
                     <div className="text-right">
                       <span className="text-xs text-white/70 block">Total Tagihan</span>
                       <span className="text-lg font-bold text-[#C4A480]">
-                        {'Rp ' + total.toLocaleString('id-ID')}
+                        {'Rp ' + (total || 0).toLocaleString('id-ID')}
                       </span>
                     </div>
                   </div>
@@ -538,7 +542,7 @@ export function CheckoutModal({ isOpen, onClose, onOpenAuth }: CheckoutModalProp
                     </div>
                     <div className="flex justify-between pt-2 border-t border-[#D8CFC3]">
                       <span className="text-[#70655B]">Total Terbayar:</span>
-                      <span className="font-bold text-base text-[#8A6B4F]">{'Rp ' + total.toLocaleString('id-ID')}</span>
+                      <span className="font-bold text-base text-[#8A6B4F]">{'Rp ' + (total || 0).toLocaleString('id-ID')}</span>
                     </div>
                   </div>
 

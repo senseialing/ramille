@@ -33,10 +33,10 @@ export function CartDrawer({ onProceedToCheckout, onOpenAuth }: CartDrawerProps)
 
   if (!isOpen) return null;
 
-  const subtotal = getSubtotal();
-  const discount = getDiscountAmount();
-  const shipping = getShippingFee();
-  const total = getTotalAmount();
+  const subtotal = getSubtotal() || 0;
+  const discount = getDiscountAmount() || 0;
+  const shipping = getShippingFee() || 0;
+  const total = getTotalAmount() || 0;
 
   const freeShippingThreshold = 500000;
   const progressPercent = Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100));
@@ -112,7 +112,7 @@ export function CartDrawer({ onProceedToCheckout, onOpenAuth }: CartDrawerProps)
 
           {/* Items List */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {items.length === 0 ? (
+            {(!items || items.length === 0) ? (
               <div className="h-full flex flex-col items-center justify-center text-center space-y-3 py-12">
                 <div className="w-16 h-16 rounded-full bg-[#EDE7DE] flex items-center justify-center text-[#8A6B4F]">
                   <ShoppingBag className="w-8 h-8 stroke-[1.5]" />
@@ -129,15 +129,17 @@ export function CartDrawer({ onProceedToCheckout, onOpenAuth }: CartDrawerProps)
                 </button>
               </div>
             ) : (
-              items.map((item) => (
+              (items || [])
+                .filter((item) => item && item.product)
+                .map((item, idx) => (
                 <div
-                  key={item.product.id}
+                  key={item.product?.id || idx}
                   className="flex space-x-4 p-3 bg-white rounded-xl border border-[#E3DBD0] shadow-2xs"
                 >
                   {/* Thumbnail */}
                   <img
-                    src={item.product.images[0]}
-                    alt={item.product.name}
+                    src={(item.product?.images && item.product.images[0]) || 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=80'}
+                    alt={item.product?.name || 'Produk'}
                     className="w-20 h-24 object-cover rounded-lg bg-[#EDE7DE] shrink-0"
                   />
 
@@ -146,36 +148,36 @@ export function CartDrawer({ onProceedToCheckout, onOpenAuth }: CartDrawerProps)
                     <div>
                       <div className="flex items-start justify-between">
                         <h4 className="text-sm font-medium text-[#1E1A17] line-clamp-1">
-                          {item.product.name}
+                          {item.product?.name || 'Produk Ramille'}
                         </h4>
                         <button
-                          onClick={() => removeItem(item.product.id)}
+                          onClick={() => removeItem(item.product?.id || '')}
                           className="text-[#A89C8F] hover:text-rose-600 transition-colors p-1"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      <p className="text-[11px] text-[#70655B] mt-0.5">{item.product.category}</p>
+                      <p className="text-[11px] text-[#70655B] mt-0.5">{item.product?.category || 'Fashion'}</p>
                     </div>
 
                     <div className="flex items-center justify-between pt-2">
                       <span className="text-xs font-semibold text-[#1E1A17]">
-                        {'Rp ' + (item.product.price * item.quantity).toLocaleString('id-ID')}
+                        {'Rp ' + ((item.product?.price || 0) * (item.quantity || 1)).toLocaleString('id-ID')}
                       </span>
 
                       {/* Qty controls */}
                       <div className="flex items-center border border-[#E3DBD0] rounded-full bg-[#FAF7F2]">
                         <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.product?.id || '', (item.quantity || 1) - 1)}
                           className="p-1 hover:text-[#8A6B4F] transition-colors cursor-pointer"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
                         <span className="px-2 text-xs font-medium text-[#1E1A17]">
-                          {item.quantity}
+                          {item.quantity || 1}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.product?.id || '', (item.quantity || 1) + 1)}
                           className="p-1 hover:text-[#8A6B4F] transition-colors cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />
@@ -239,12 +241,12 @@ export function CartDrawer({ onProceedToCheckout, onOpenAuth }: CartDrawerProps)
               <div className="space-y-1.5 text-xs text-[#70655B] pt-2 border-t border-[#E3DBD0]">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span className="font-medium text-[#1E1A17]">{'Rp ' + subtotal.toLocaleString('id-ID')}</span>
+                  <span className="font-medium text-[#1E1A17]">{'Rp ' + (subtotal || 0).toLocaleString('id-ID')}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-emerald-600">
                     <span>Diskon Kupon</span>
-                    <span>{'- Rp ' + discount.toLocaleString('id-ID')}</span>
+                    <span>{'- Rp ' + (discount || 0).toLocaleString('id-ID')}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
@@ -253,13 +255,13 @@ export function CartDrawer({ onProceedToCheckout, onOpenAuth }: CartDrawerProps)
                     {shipping === 0 ? (
                       <span className="text-emerald-600 font-semibold">GRATIS</span>
                     ) : (
-                      'Rp ' + shipping.toLocaleString('id-ID')
+                      'Rp ' + (shipping || 0).toLocaleString('id-ID')
                     )}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm font-semibold text-[#1E1A17] pt-2 border-t border-[#E3DBD0]">
                   <span>Total Tagihan</span>
-                  <span className="text-base text-[#8A6B4F]">{'Rp ' + total.toLocaleString('id-ID')}</span>
+                  <span className="text-base text-[#8A6B4F]">{'Rp ' + (total || 0).toLocaleString('id-ID')}</span>
                 </div>
               </div>
 

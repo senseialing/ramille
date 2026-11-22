@@ -118,34 +118,36 @@ export const useCartStore = create<CartState>()(
       removeCoupon: () => set({ appliedCoupon: null, couponError: null }),
 
       getItemCount: () => {
-        return get().items.reduce((acc, item) => acc + item.quantity, 0);
+        const items = get().items || [];
+        return items.reduce((acc, item) => acc + (item?.quantity || 0), 0);
       },
 
       getSubtotal: () => {
-        return get().items.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+        const items = get().items || [];
+        return items.reduce((acc, item) => acc + (item?.product?.price || 0) * (item?.quantity || 1), 0);
       },
 
       getDiscountAmount: () => {
         const { appliedCoupon } = get();
         if (!appliedCoupon) return 0;
-        const subtotal = get().getSubtotal();
+        const subtotal = get().getSubtotal() || 0;
         if (appliedCoupon.discountType === 'percentage') {
-          return Math.round((subtotal * appliedCoupon.value) / 100);
+          return Math.round((subtotal * (appliedCoupon.value || 0)) / 100);
         }
-        return Math.min(appliedCoupon.value, subtotal);
+        return Math.min(appliedCoupon.value || 0, subtotal);
       },
 
       getShippingFee: () => {
-        const subtotal = get().getSubtotal();
+        const subtotal = get().getSubtotal() || 0;
         if (subtotal === 0) return 0;
         return subtotal >= 500000 ? 0 : 35000;
       },
 
       getTotalAmount: () => {
-        const subtotal = get().getSubtotal();
+        const subtotal = get().getSubtotal() || 0;
         if (subtotal === 0) return 0;
-        const discount = get().getDiscountAmount();
-        const shipping = get().getShippingFee();
+        const discount = get().getDiscountAmount() || 0;
+        const shipping = get().getShippingFee() || 0;
         return Math.max(0, subtotal - discount + shipping);
       },
     }),
