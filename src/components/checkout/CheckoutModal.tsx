@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { X, ShieldCheck, CheckCircle2, QrCode, CreditCard, Building2, ExternalLink, Lock, UserCheck } from 'lucide-react';
@@ -14,6 +14,7 @@ interface CheckoutModalProps {
 
 export function CheckoutModal({ isOpen, onClose, onOpenAuth }: CheckoutModalProps) {
   const { items, getSubtotal, getDiscountAmount, getShippingFee, getTotalAmount, clearCart } = useCartStore();
+  const { addOrder } = useOrdersStore();
   const { user, isLoggedIn } = useAuthStore();
 
   const [formData, setFormData] = useState({
@@ -112,8 +113,6 @@ export function CheckoutModal({ isOpen, onClose, onOpenAuth }: CheckoutModalProp
       }, 600);
     }
   };
-
-  const { addOrder } = useOrdersStore();
 
   const handleSimulateSuccess = () => {
     const finalMethod = selectedMethod === 'qris' 
