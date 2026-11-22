@@ -30,11 +30,14 @@ export default function GlobalError({
           <button
             onClick={() => {
               try {
-                localStorage.removeItem('ramille-cart-v2');
-                localStorage.removeItem('ramille-cart-storage');
+                Object.keys(localStorage).forEach((k) => {
+                  if (k.startsWith('ramille-')) {
+                    localStorage.removeItem(k);
+                  }
+                });
               } catch (e) {}
               reset();
-              window.location.reload();
+              window.location.href = '/';
             }}
             className="px-6 py-3 rounded-full bg-[#1E1A17] hover:bg-[#332D28] text-white text-xs font-semibold tracking-wide transition-all shadow-md cursor-pointer flex items-center justify-center space-x-2"
           >
